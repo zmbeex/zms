@@ -1,4 +1,4 @@
-package zmsClient
+package zms
 
 import (
 	"github.com/zmbeex/gkit"
