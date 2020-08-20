@@ -1,4 +1,4 @@
-module zms
+module github.com/zmbeex/zms
 
 go 1.14
 

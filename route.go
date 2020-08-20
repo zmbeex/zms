@@ -5,15 +5,15 @@ import (
 	"strings"
 )
 
-type ZmsRouter struct {
+type Router struct {
 	Code   string      `title:"服务编码"`
 	Desc   string      `title:"服务描述"`
 	Role   []string    `title:"访问角色"`
 	Params interface{} `title:"参数模型"`
-	Func   func(z *zms.Zms)
+	Func   func(z *Zms)
 }
 
-func (r ZmsRouter) Register() {
+func (r Router) Register() {
 	Cache.ServerRouterMap[r.Code] = &r
 	info := new(ServerInfo)
 	info.Code = r.Code
@@ -49,8 +49,9 @@ func (z *Zurl) String() string {
 	return z.val
 }
 
+/// 运行
 func Run() {
-	c := new(ZmsClient)
+	c := new(Client)
 
 	// 重新连接
 	c.reconnect()

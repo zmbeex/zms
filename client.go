@@ -1,7 +1,6 @@
 package zms
 
 import (
-	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/zmbeex/gkit"
 	"net"
@@ -12,14 +11,14 @@ import (
 	"time"
 )
 
-type ZmsClient struct {
+type Client struct {
 	Conn        *websocket.Conn
 	Url         string   `title:"ws的url"`
 	Reconnect   chan int `title:"重新连接信道"`
 	isReconnect bool     //正在重新连接
 }
 
-func (c *ZmsClient) reconnect() {
+func (c *Client) reconnect() {
 	if c.isReconnect {
 		return
 	}
@@ -55,7 +54,7 @@ func (c *ZmsClient) reconnect() {
 }
 
 // 处理心跳
-func (c *ZmsClient) Hearbeat() {
+func (c *Client) Hearbeat() {
 	for {
 		if c.Conn == nil {
 			time.Sleep(1 * time.Second)
@@ -63,7 +62,7 @@ func (c *ZmsClient) Hearbeat() {
 			continue
 		}
 		time.Sleep(time.Second * 10)
-		result := new(zms.Result)
+		result := new(Result)
 		result.Code = "zms.system.heart.beats"
 		result.Uuid = Cache.Uuid
 		result.Status = 1
@@ -72,7 +71,7 @@ func (c *ZmsClient) Hearbeat() {
 }
 
 //处理websocket消息
-func (c *ZmsClient) handleMessage() {
+func (c *Client) handleMessage() {
 	for {
 		if c.Conn == nil {
 			time.Sleep(1 * time.Second)
@@ -90,13 +89,13 @@ func (c *ZmsClient) handleMessage() {
 				continue
 			}
 			if _, ok := err.(*websocket.CloseError); ok {
-				fmt.Println("服务端关闭了连接")
+				gkit.Info("服务端关闭了连接")
 				time.Sleep(10 * time.Second)
 				c.reconnect()
 				continue
 			}
 
-			fmt.Println("错误类型", reflect.TypeOf(err))
+			gkit.Warn("错误类型" + reflect.TypeOf(err).String())
 			gkit.Debug("错误：" + err.Error())
 			os.Exit(1)
 			return
@@ -106,10 +105,10 @@ func (c *ZmsClient) handleMessage() {
 }
 
 // 处理结果
-func (c *ZmsClient) dealMessage(msg string) {
+func (c *Client) dealMessage(msg string) {
 	gkit.Debug("接收到信息：" + msg)
-	params := new(zms.Params)
-	result := new(zms.Result)
+	params := new(Params)
+	result := new(Result)
 	defer func() {
 		r := recover()
 		if r != nil {
@@ -133,7 +132,7 @@ func (c *ZmsClient) dealMessage(msg string) {
 		gkit.Error("收到无效服务：" + params.Code)
 		return
 	}
-	z := zms.InitZms(params, result)
+	z := InitZms(params, result)
 	defer func() {
 		r := recover()
 		if r == nil {
@@ -164,7 +163,7 @@ func (c *ZmsClient) dealMessage(msg string) {
 }
 
 // 写入数据
-func (c *ZmsClient) Write(msg *zms.Result) {
+func (c *Client) Write(msg *Result) {
 	if msg.Status == 0 {
 		msg.Status = 1
 	}

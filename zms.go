@@ -11,6 +11,13 @@ type Zms struct {
 	UserId       int64 `title:"用户ID"`
 }
 
+func InitZms(params *Params, result *Result) *Zms {
+	z := new(Zms)
+	z.clientParams = params
+	z.clientResult = result
+	return z
+}
+
 func (z *Zms) GetParams(params interface{}) {
 	defer func() {
 		r := recover()
