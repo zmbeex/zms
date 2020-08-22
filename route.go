@@ -2,6 +2,7 @@ package zms
 
 import (
 	"github.com/zmbeex/gkit"
+	"reflect"
 	"strings"
 )
 
@@ -13,24 +14,43 @@ type Router struct {
 	Func   func(z *Zms)
 }
 
+type ParamsModel struct {
+	Title        string
+	Check        string
+	Name         string
+	DefaultValue string
+	Type         string
+}
+
 func (r Router) Register() {
 	Cache.ServerRouterMap[r.Code] = &r
 	info := new(ServerInfo)
 	info.Code = r.Code
 	info.Desc = r.Desc
 	info.Role = r.Role
-	info.Params = map[string]interface{}{
-		"Params": r.Params,
+	info.Params = make(map[string]*ParamsModel)
+	if r.Params != nil {
+		json, _ := gkit.GetJSONStruct(r.Params)
+		json.Range(func(typeField reflect.StructField, value reflect.Value) {
+			model := new(ParamsModel)
+			model.Name = gkit.StringFirstLower(typeField.Name)
+			model.Check = typeField.Tag.Get("check")
+			model.DefaultValue = typeField.Tag.Get("defaultValue")
+			model.Title = typeField.Tag.Get("title")
+			model.Type = typeField.Type.Name()
+			info.Params[model.Name] = model
+		})
 	}
 	Cache.ServerInfo[r.Code] = info
 	gkit.Info("注册路由：" + info.Code + " -> " + info.Desc + " -> " + strings.Join(info.Role, ","))
+	gkit.Info(gkit.SetJson(info.Params))
 }
 
 type ServerInfo struct {
-	Code   string                 `title:"服务编码"`
-	Desc   string                 `title:"服务描述"`
-	Role   []string               `title:"访问角色"`
-	Params map[string]interface{} `title:"参数模型"`
+	Code   string                  `title:"服务编码"`
+	Desc   string                  `title:"服务描述"`
+	Role   []string                `title:"访问角色"`
+	Params map[string]*ParamsModel `title:"参数模型"`
 }
 
 type Zurl struct {
