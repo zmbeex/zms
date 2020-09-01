@@ -70,13 +70,15 @@ func (z *Zms) SetNote(note string) {
 // 设置结果
 func (z *Zms) SetResult(result interface{}) {
 	t := reflect.TypeOf(result)
+	val := reflect.ValueOf(result)
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
+		val = val.Elem()
 	}
 	if t.Kind() == reflect.Slice || t.Kind() == reflect.Array {
-		list, ok := result.([]interface{})
-		if ok {
-			z.clientResult.List = list
+		sliceLen := val.Len()
+		for i := 0; i < sliceLen; i++ {
+			z.clientResult.List = append(z.clientResult.List, val.Index(i).Interface())
 		}
 	}
 	if t.Kind() == reflect.Map || t.Kind() == reflect.Struct {

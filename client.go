@@ -123,7 +123,7 @@ func (c *Client) dealMessage(msg string) {
 		result.Status = -1
 		return
 	}
-	params.Code = strings.TrimPrefix(params.Code, Cache.Set.UserName+".")
+	params.Code = strings.TrimPrefix(params.Code, Cache.Set.UserName+"#")
 	result.Code = params.Code
 	result.Uuid = params.Uuid
 	r := Cache.ServerRouterMap[params.Code]
