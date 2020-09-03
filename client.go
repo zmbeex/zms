@@ -37,8 +37,9 @@ func (c *Client) reconnect() {
 	u.Push("uid", Cache.Uuid)
 	u.Push("sign", gkit.GetSHA(signString))
 	u.Push("userName", Cache.Set.UserName)
-	u.Push("servers", gkit.SetAesCBC(gkit.SetJson(Cache.ServerInfo), Cache.Set.ServerInfoKey))
+	//u.Push("servers", gkit.SetAesCBC(gkit.SetJson(Cache.ServerInfo), Cache.Set.ServerInfoKey))
 	c.Url = u.String()
+	gkit.Debug(c.Url)
 	conn, _, err := websocket.DefaultDialer.Dial(c.Url, nil)
 
 	gkit.Error(signString)
@@ -117,6 +118,15 @@ func (c *Client) dealMessage(msg string) {
 		}
 		c.Write(result)
 	}()
+
+	if msg == "zms.system.api.doc" {
+		result.Code = msg
+		for _, val := range Cache.ServerInfo {
+			result.List = append(result.List, val)
+		}
+		c.Write(result)
+		return
+	}
 	err := gkit.GetJson(msg, params)
 	if err != nil {
 		gkit.Error("报文数据异常：" + params.Code)
