@@ -15,6 +15,7 @@ func InitZms(params *Params, result *Result) *Zms {
 	z := new(Zms)
 	z.clientParams = params
 	z.clientResult = result
+	z.UserId = params.UserId
 	return z
 }
 
