@@ -32,18 +32,19 @@ func (c *Client) reconnect() {
 	timeStamp := time.Now().Unix()
 	signString := "zms.test|" + gkit.ToString(timeStamp) + "|" + Cache.Uuid
 	signString += "|" + Cache.Set.UserName + "|" + Cache.Set.Password
-	u.Add(Cache.Set.GatewayHost + "?")
+	u.Add(Cache.Set.GatewayHost + "/gateway?")
 	u.Push("timeStamp", timeStamp)
 	u.Push("uid", Cache.Uuid)
 	u.Push("sign", gkit.GetSHA(signString))
 	u.Push("userName", Cache.Set.UserName)
-	//u.Push("servers", gkit.SetAesCBC(gkit.SetJson(Cache.ServerInfo), Cache.Set.ServerInfoKey))
 	c.Url = u.String()
 	gkit.Debug(c.Url)
 	conn, _, err := websocket.DefaultDialer.Dial(c.Url, nil)
-
-	gkit.Error(signString)
-	gkit.Error(gkit.GetSHA(signString))
+	if err != nil {
+		gkit.Error("连接失败 ------>")
+		gkit.Error(signString)
+		gkit.Error(gkit.GetSHA(signString))
+	}
 	if err != nil {
 		gkit.Error("连接失败:" + err.Error())
 		time.Sleep(5 * time.Second)
@@ -177,7 +178,7 @@ func (c *Client) Write(msg *Result) {
 	if msg.Status == 0 {
 		msg.Status = 1
 	}
-	gkit.Debug("发送报文：" + gkit.SetJson(msg))
+	gkit.Debug("发送报文zms：" + gkit.SetJson(msg))
 	err := c.Conn.WriteJSON(msg)
 	gkit.CheckError(err, "数据发送失败")
 }

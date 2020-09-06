@@ -3,6 +3,7 @@ package zms
 import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/zmbeex/gkit"
+	"time"
 )
 
 // 参数
@@ -33,7 +34,7 @@ var Cache struct {
 type Setting struct {
 	UserName      string `title:"账号" defaultValue:"dev"`
 	Password      string `title:"密码" defaultValue:"qwertyuiop3466f"`
-	GatewayHost   string `title:"网关" defaultValue:"ws://localhost:8088/gateway"`
+	GatewayHost   string `title:"网关" defaultValue:"ws://localhost:8088"`
 	ServerInfoKey string `title:"服务信息加密密钥" defaultValue:"1234567812345678"`
 	TokenKey      string `title:"token的加密key" defaultValue:"test.zmbeex.demo"`
 	AccessTime    int64  `title:"access 有效时间，默认10分钟" defaultValue:"600"`
@@ -48,4 +49,27 @@ func init() {
 		Cache.Uuid = uuid.NewV4().String()
 		Cache.ServerInfo = make(map[string]*ServerInfo)
 	})
+}
+
+// 调用其他服务
+func CallServer(code string, params string, userId int64) *Result {
+	timeStamp := time.Now().Unix()
+	sign := "zms.call|" + gkit.ToString(timeStamp) + "|" + code + "|" + params
+	sign = gkit.GetSHA(sign)
+	data := gkit.HttpGET(Cache.Set.GatewayHost+"/call", map[string]interface{}{
+		"code":      code,
+		"sign":      sign,
+		"params":    params,
+		"userId":    userId,
+		"clientUid": Cache.Uuid,
+	}).ToString()
+
+	p := new(Result)
+
+	err := gkit.GetJson(data, p)
+	if err != nil {
+		gkit.Error("CallServer执行失败")
+		gkit.Error(err.Error())
+	}
+	return p
 }
