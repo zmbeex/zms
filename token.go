@@ -45,17 +45,7 @@ func (t *Token) SetAccess() string {
 
 	err := tredis.SetRedis(
 		tokenPrefix+t.access,
-		gkit.ToString(t.Id)+"#"+s,
-		time.Duration(Cache.Set.AccessTime)*time.Second,
-	)
-	if err != nil {
-		gkit.Warn(err.Error())
-		return ""
-	}
-
-	err = tredis.SetRedis(
-		gkit.ToString(t.Id)+"#"+s,
-		tokenPrefix+t.access,
+		s,
 		time.Duration(Cache.Set.AccessTime)*time.Second,
 	)
 	if err != nil {
@@ -68,15 +58,12 @@ func (t *Token) SetAccess() string {
 // 删除access
 func (t *Token) DelAccess(access string) {
 	flag := tredis.GetRedis(tokenPrefix + access)
-	_ = tredis.SetRedis(access, flag, 30*time.Second)
-	_ = tredis.SetRedis(flag, access, 30*time.Second)
+	_ = tredis.SetRedis(tokenPrefix+access, flag, 30*time.Second)
 }
 
 func (t *Token) SetToken() string {
 	s := gkit.SetJson(t)
-	s = gkit.GetSHA(s)
-
-	err := tredis.SetRedis(tokenPrefix+s, gkit.SetJson(t), time.Duration(Cache.Set.TokenTime)*time.Second)
+	err := tredis.SetRedis(tokenPrefix+gkit.GetSHA(s), s, time.Duration(Cache.Set.TokenTime)*time.Second)
 	if err != nil {
 		gkit.Warn(err.Error())
 		return ""
@@ -97,7 +84,15 @@ func GetToken(token string) *Token {
 	return t
 }
 
-func GetAccess(access string) string {
+func GetAccess(access string) *Token {
+	t := new(Token)
 	s := tredis.GetRedis(tokenPrefix + access)
-	return s
+	if s == "" {
+		return nil
+	}
+	err := gkit.GetJson(s, t)
+	if err != nil {
+		return nil
+	}
+	return t
 }

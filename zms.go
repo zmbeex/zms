@@ -69,7 +69,7 @@ func (z *Zms) SetNote(note string) {
 }
 
 // 设置结果
-func (z *Zms) SetResult(result interface{}) {
+func (z *Zms) SetList(result interface{}) {
 	t := reflect.TypeOf(result)
 	val := reflect.ValueOf(result)
 	if t.Kind() == reflect.Ptr {

@@ -24,6 +24,11 @@ type Result struct {
 	List   []interface{}          `title:"返回结果，数组"`
 }
 
+const (
+	ROLE_PUBLIC = "zms_public"
+	ROLE_ADMIN  = "zms_admin"
+)
+
 var Cache struct {
 	ServerRouterMap map[string]*Router
 	ServerInfo      map[string]*ServerInfo
