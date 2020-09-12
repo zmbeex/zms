@@ -33,13 +33,13 @@ func SetToken(userId int64, platform int, code string, device string) *Token {
 }
 
 // 每次生成一个新的access,并以此为键，存储data的值
-func (t *Token) SetAccess() string {
+func (t *Token) SetAccess() (string, int64) {
 	s := gkit.SetJson(map[string]interface{}{
 		"Id":       t.Id,
 		"Platform": t.Platform,
-		"Time":     time.Now().UnixNano(),
 		"Code":     t.Code,
 		"Device":   t.Device,
+		"Time":     time.Now().UnixNano(),
 	})
 	t.access = gkit.GetSHA(s)
 
@@ -50,25 +50,26 @@ func (t *Token) SetAccess() string {
 	)
 	if err != nil {
 		gkit.Warn(err.Error())
-		return ""
+		return "", 0
 	}
-	return t.access
+	return t.access, Cache.Set.AccessTime
 }
 
 // 删除access
 func (t *Token) DelAccess(access string) {
 	flag := tredis.GetRedis(tokenPrefix + access)
-	_ = tredis.SetRedis(tokenPrefix+access, flag, 30*time.Second)
+	_ = tredis.SetRedis(tokenPrefix+access, flag, 60*time.Second)
 }
 
-func (t *Token) SetToken() string {
+func (t *Token) SetToken() (string, int64) {
 	s := gkit.SetJson(t)
-	err := tredis.SetRedis(tokenPrefix+gkit.GetSHA(s), s, time.Duration(Cache.Set.TokenTime)*time.Second)
+	token := gkit.GetSHA(s)
+	err := tredis.SetRedis(tokenPrefix+token, s, time.Duration(Cache.Set.TokenTime)*time.Second)
 	if err != nil {
 		gkit.Warn(err.Error())
-		return ""
+		return "", 0
 	}
-	return s
+	return token, Cache.Set.TokenTime
 }
 
 func GetToken(token string) *Token {

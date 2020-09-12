@@ -170,7 +170,9 @@ func (c *Client) dealMessage(msg string) {
 		z.SetNote("未知异常")
 	}()
 	r.Func(z)
-	result.Status = 1
+	if result.Status == 0 {
+		result.Status = 1
+	}
 }
 
 // 写入数据

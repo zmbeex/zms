@@ -48,7 +48,10 @@ func (z *Zms) GetParams(params interface{}) {
 		key := t0.Name
 		check := t0.Tag.Get("check")
 		title := t0.Tag.Get("title")
-		val := data[gkit.StringFirstLower(key)]
+		val := data[key]
+		if val == nil {
+			val = data[gkit.StringFirstLower(key)]
+		}
 		err := gkit.CheckValue(check, title, gkit.ToString(val))
 		gkit.CheckPanic(err, "参数异常")
 		if val == "" {

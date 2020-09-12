@@ -40,8 +40,8 @@ type Setting struct {
 	UserName      string `title:"账号" defaultValue:"dev"`
 	Password      string `title:"密码" defaultValue:"qwertyuiop3466f"`
 	GatewayHost   string `title:"网关" defaultValue:"ws://localhost:8088"`
+	CallHost      string `title:"网关" defaultValue:"http://localhost:8088"`
 	ServerInfoKey string `title:"服务信息加密密钥" defaultValue:"1234567812345678"`
-	TokenKey      string `title:"token的加密key" defaultValue:"test.zmbeex.demo"`
 	AccessTime    int64  `title:"access 有效时间，默认10分钟" defaultValue:"600"`
 	TokenTime     int64  `title:"access 有效时间, 默认10天" defaultValue:"864000"`
 }
@@ -58,23 +58,34 @@ func init() {
 
 // 调用其他服务
 func CallServer(code string, params string, userId int64) *Result {
-	timeStamp := time.Now().Unix()
-	sign := "zms.call|" + gkit.ToString(timeStamp) + "|" + code + "|" + params
-	sign = gkit.GetSHA(sign)
-	data := gkit.HttpGET(Cache.Set.GatewayHost+"/call", map[string]interface{}{
-		"code":      code,
-		"sign":      sign,
-		"params":    params,
-		"userId":    userId,
-		"clientUid": Cache.Uuid,
-	}).ToString()
-
 	p := new(Result)
+	p.Code = code
+	func() {
+		defer func() {
+			r := recover()
+			if r != nil {
+				p.Note = "调用服务异常"
+				p.Status = -888
+				p.Note = gkit.ToString(r)
+			}
+		}()
+		timeStamp := time.Now().Unix()
+		sign := "zms.call|" + gkit.ToString(timeStamp) + "|" + code + "|" + params
+		sign = gkit.GetSHA(sign)
+		data := gkit.HttpPOST(Cache.Set.CallHost+"/call", map[string]string{
+			"code":      code,
+			"sign":      sign,
+			"params":    params,
+			"userId":    gkit.ToString(userId),
+			"clientUid": Cache.Set.UserName + "#" + Cache.Uuid,
+			"timeStamp": gkit.ToString(time.Now().Unix()),
+		}).ToString()
 
-	err := gkit.GetJson(data, p)
-	if err != nil {
-		gkit.Error("CallServer执行失败")
-		gkit.Error(err.Error())
-	}
+		err := gkit.GetJson(data, p)
+		if err != nil {
+			gkit.Error("CallServer执行失败")
+			gkit.Error(err.Error())
+		}
+	}()
 	return p
 }
