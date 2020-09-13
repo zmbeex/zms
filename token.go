@@ -118,7 +118,8 @@ func SetTokenAllData(userId int64, key string) error {
 // 删除所有token数据
 func DelTokenAllData(userId int64) {
 	s := tredis.GetRedis(userTokenInfoPrefix + gkit.ToString(userId))
-	tredis.DeleteRedis(strings.Split(s, ",")...)
+	list := strings.Split(s, ",")
+	tredis.DeleteRedis(list...)
 	tredis.DeleteRedis(userTokenInfoPrefix + gkit.ToString(userId))
 }
 
