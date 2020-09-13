@@ -3,10 +3,13 @@ package zms
 import (
 	"github.com/zmbeex/dao/tredis"
 	"github.com/zmbeex/gkit"
+	"strings"
 	"time"
 )
 
 var tokenPrefix = "zms.token_"
+var userRole = "zms.role_"
+var userTokenInfo = "zms.user.info_"
 
 type Token struct {
 	Id       int64  `title:"用户id"`
@@ -19,7 +22,7 @@ type Token struct {
 }
 
 // 创建token
-func SetToken(userId int64, platform int, code string, device string) *Token {
+func SetToken(userId int64, platform int) *Token {
 	t := new(Token)
 	if userId == 0 {
 		return t
@@ -27,8 +30,6 @@ func SetToken(userId int64, platform int, code string, device string) *Token {
 	t.Id = userId
 	t.Platform = platform
 	t.Time = time.Now().Unix()
-	t.Code = code
-	t.Device = device
 	return t
 }
 
@@ -48,6 +49,8 @@ func (t *Token) SetAccess() (string, int64) {
 		s,
 		time.Duration(Cache.Set.AccessTime)*time.Second,
 	)
+	// 记录
+	_ = SetTokenAllData(t.Id, tokenPrefix+t.access)
 	if err != nil {
 		gkit.Warn(err.Error())
 		return "", 0
@@ -65,6 +68,8 @@ func (t *Token) SetToken() (string, int64) {
 	s := gkit.SetJson(t)
 	token := gkit.GetSHA(s)
 	err := tredis.SetRedis(tokenPrefix+token, s, time.Duration(Cache.Set.TokenTime)*time.Second)
+	// 记录
+	_ = SetTokenAllData(t.Id, tokenPrefix+token)
 	if err != nil {
 		gkit.Warn(err.Error())
 		return "", 0
@@ -96,4 +101,34 @@ func GetAccess(access string) *Token {
 		return nil
 	}
 	return t
+}
+
+// 设置token数据
+func SetTokenAllData(userId int64, key string) error {
+	s := tredis.GetRedis(userTokenInfo + gkit.ToString(userId))
+	s += key
+	return tredis.SetRedis(key, s, time.Duration(Cache.Set.TokenTime)*time.Second)
+}
+
+// 删除所有token数据
+func DelTokenAllData(userId int64, key string) {
+	s := tredis.GetRedis(userTokenInfo + gkit.ToString(userId))
+	tredis.DeleteRedis(strings.Split(s, ",")...)
+}
+
+// 设置用户角色
+func SetRole(userId int64, roles []string) error {
+	err := tredis.SetRedis(
+		userRole+gkit.ToString(userId),
+		strings.Join(roles, ","),
+		time.Duration(Cache.Set.TokenTime)*time.Second)
+	// 记录
+	_ = SetTokenAllData(userId, userRole+gkit.ToString(userId))
+	return err
+}
+
+// 获取用户角色
+func GetRole(userId int64) []string {
+	s := tredis.GetRedis(userRole + gkit.ToString(userId))
+	return strings.Split(s, ",")
 }

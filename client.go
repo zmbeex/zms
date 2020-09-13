@@ -143,7 +143,7 @@ func (c *Client) dealMessage(msg string) {
 		gkit.Error("收到无效服务：" + params.Code)
 		return
 	}
-	z := InitZms(params, result)
+	z := InitZms(params, result, r)
 	defer func() {
 		r := recover()
 		if r == nil {

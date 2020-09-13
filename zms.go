@@ -9,13 +9,15 @@ type Zms struct {
 	clientParams *Params
 	clientResult *Result
 	UserId       int64 `title:"用户ID"`
+	R            *Router
 }
 
-func InitZms(params *Params, result *Result) *Zms {
+func InitZms(params *Params, result *Result, r *Router) *Zms {
 	z := new(Zms)
 	z.clientParams = params
 	z.clientResult = result
 	z.UserId = params.UserId
+	z.R = r
 	return z
 }
 
